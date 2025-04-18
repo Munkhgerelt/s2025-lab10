@@ -1,5 +1,7 @@
 import { ImageAnnotatorClient } from '@google-cloud/vision';
 
+process.env.GOOGLE_APPLICATION_CREDENTIALS = "C:\\Users\\Munkhgerelt\\Downloads\\mystic-stack-457202-s9-ca732d633e6a.json";
+
 const client = new ImageAnnotatorClient();
 
 function detectFace(fileName: string) {
@@ -54,7 +56,34 @@ function main (fileNames: string[]): void {
 // Implement the async version of the above here
 // Your version should not use .then and should use try/catch instead of .catch
 async function mainAsync(fileNames: string[]): Promise<void> {
-    // Your code here
+    for (const fileName of fileNames) {
+        console.log(`Running logo detection on ${fileName}`);
+        try {
+            const [result] = await client.logoDetection(fileName);
+            const logos = result.logoAnnotations;
+            let scores: number[] = [];
+
+            logos?.forEach((logo) => {
+                if (logo.description)
+                    console.log(`"${logo.description}" found in file ${fileName}`);
+                if (logo.score)
+                    scores.push(logo.score);
+            });
+
+            if (scores.length > 0) {
+                const avg = scores.reduce((a, b) => a + b) / scores.length;
+                console.log(`Average score for ${fileName}: ${avg}`);
+            } else {
+                console.log(`No logos found in file ${fileName}`);
+            }
+        } catch (err: any) {
+            if (err.code === 'ENOENT') {
+                console.log(`File ${fileName} not found`);
+            } else {
+                console.log(`Error processing file ${fileName}:`, err);
+            }
+        }
+    }
 }
 
 main([
@@ -66,5 +95,5 @@ main([
 mainAsync([
     './images/cmu.jpg', 
     './images/logo-types-collection.jpg', 
-    './images/not-a-file.jpg'
-]);
+
+]);    './images/not-a-file.jpg'
